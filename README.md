@@ -33,7 +33,7 @@ The other change to be made is the API key for ExchangeRate-API that I mentioned
 
 If the file path is set up correctly, all the work required is to click the run button at the top, the one that resembles a fast forward button:
 
-<img width="299" alt="Screenshot 2024-08-28 at 1 33 13 PM" src="https://github.com/user-attachments/assets/0d3ee142-c879-4a9e-80e7-cb0a1fd1c4ac">
+![pixil-frame-0 (2)](https://github.com/user-attachments/assets/d4b45233-a1f9-40de-914b-234d5224f0cd)
 
 Once you've done this, the sheet should be uploaded into the original file!
 
