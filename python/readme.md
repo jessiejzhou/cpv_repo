@@ -1,4 +1,4 @@
-## Overview
+# Stock Info
 This file uses our master dataset to grab publicly traded companies' financial info from Yahoo Finance. Workflow is: grabbing the company ticker symbol from the excel file, using this with an API to pull from yfinance, and then uploading into a new dataset. This new dataset is then attached as a new sheet into the original excel.
 
 ## Using this file
@@ -36,3 +36,11 @@ If the file path is set up correctly, all the work required is to click the run 
 ![pixil-frame-0 (2)](https://github.com/user-attachments/assets/d4b45233-a1f9-40de-914b-234d5224f0cd)
 
 Once you've done this, the sheet should be uploaded into the original file!
+
+
+# Company Upload
+This file utilizes the hivebrite API to push changes onto the website. The only thing you need to change is `file_path` and make sure `sheet_name' is correct in this line:
+
+`df = pd.read_excel(file_path, sheet_name="industry_only")`
+
+In this example, we're pulling CVC industry and the sheet on the excel file is called "industry_only." Then, just click run.
