@@ -27,7 +27,7 @@ With the new dataframe `result`, we use another [API](https://www.exchangerate-a
 ### Using this code
 Running this is super simple; there are only a few changes required for your use. First, if the original excel file name is modified or if the file path is changed (i.e. moved into different folders on your computer), `file_path` needs to be updated accordingly. You can easily get the path by right clicking on your file in jupyterlab and selecting "Copy Path."
 
-<img width="439" alt="Screenshot 2024-08-28 at 1 29 16 PM" src="https://github.com/user-attachments/assets/99c44e12-12cb-401b-9413-4e522a3678fa">
+![pixil-frame-0](https://github.com/user-attachments/assets/d656da05-c5c1-4a8f-b481-e8ec60380204)
 
 The other change to be made is the API key for ExchangeRate-API that I mentioned previously. This is optional but **highly reccomended**. 
 
