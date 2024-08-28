@@ -1,0 +1,60 @@
+---
+title: "pivot df"
+author: "Jessie Zhou"
+date: "2024-08-06"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(areaplot)
+library(readxl)
+library(tidyverse)
+library(openxlsx)
+```
+
+# reading df
+```{r}
+df <- read_excel("/Users/counterpartventures/Desktop/Data/Survey_Data_V5.xlsx", 
+                     sheet = "Master Data")
+```
+
+# pivoting longer
+```{r}
+df_long <- df %>%
+  mutate(across(-cvc_name, as.character)) %>%
+  pivot_longer(
+    cols = -colnames(df)[1:12],
+    names_to = c("question", "year"),
+    names_pattern = "(.*)_from_(\\d{2})"
+  ) %>%
+  mutate(year = paste0("20", year))
+
+df_wide <- df_long %>%
+  pivot_wider(
+    names_from = question,
+    values_from = value
+  )
+```
+
+# converting back to numerical
+```{r}
+for (col_name in names(df_wide)) {
+  if (all(grepl("^[0-9]*\\.?[0-9]+$", df_wide[[col_name]][!is.na(df_wide[[col_name]])]))) {
+    df_wide[[col_name]] <- as.numeric(df_wide[[col_name]])
+  }
+}
+```
+
+```{r}
+write.xlsx(df_wide, "/Users/counterpartventures/Desktop/Data/survey_long.xlsx")
+```
+
+
+
+
+
+

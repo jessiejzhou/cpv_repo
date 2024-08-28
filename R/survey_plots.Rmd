@@ -1,0 +1,1039 @@
+---
+title: "Survey Plots"
+date: "2024-07-03"
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(areaplot)
+library(readxl)
+```
+
+
+
+# Loading df
+```{r}
+df <- read_excel("/Users/counterpartventures/Desktop/Data/Survey_Data_V4.0.xlsx", 
+                     sheet = "Master Data")
+
+df_long <- read_excel("/Users/counterpartventures/Desktop/Data/survey_long.xlsx")
+
+
+
+# functions to calculate percentages within a column
+
+calculate_percentage <- function(df, column) {
+  df %>%
+    filter(!is.na(!!sym(column))) %>%
+    count(!!sym(column)) %>%
+    mutate(percentage = n / sum(n)) %>%
+    dplyr::select(!!sym(column), percentage)
+}
+
+calculate_percentage_col <- function(column) {
+  column <- na.omit(column)
+  counts <- table(column)
+  percentages <- counts / sum(counts)
+  data.frame(category = names(percentages), percentage = as.numeric(percentages))
+}
+
+```
+
+
+# Mandates over Time
+```{r}
+mandates <- df %>%
+  select(mandate_from_21, mandate_from_22, 
+         mandate_from_23, mandate_from_24)
+
+
+percentages_list <- lapply(names(mandates), function(col) {
+  calculate_percentage(mandates, col) %>%
+    rename(mandate = !!sym(col)) %>%
+    mutate(label = col)
+})
+
+mandate_pct <- bind_rows(percentages_list) %>%
+  pivot_wider(names_from = label, values_from = percentage, values_fill = 0) %>%
+  filter(mandate != "N/A")
+
+mandate_pct_long <- mandate_pct %>%
+  pivot_longer(cols = starts_with("mandate_"),
+               names_to = "year", values_to = "percentage") %>%
+  mutate(year = as.numeric(substr(year, nchar(year)-1, nchar(year))))
+
+write.csv(mandate_pct_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/mandate_pct.csv")
+```
+```{r}
+cohorts <- df %>%
+  select(fund_category_from_21, fund_category_from_22, 
+         fund_category_from_23, fund_category_from_24)
+
+
+percentages_list <- lapply(names(cohorts), function(col) {
+  calculate_percentage(cohorts, col) %>%
+    rename(fund_category = !!sym(col)) %>%
+    mutate(label = col)
+})
+
+cohorts_pct <- bind_rows(percentages_list) %>%
+  pivot_wider(names_from = label, values_from = percentage, values_fill = 0) %>%
+  filter(fund_category != "N/A")
+
+cohorts_pct_long <- cohorts_pct %>%
+  pivot_longer(cols = starts_with("fund_category_"),
+               names_to = "year", values_to = "percentage") %>%
+  mutate(year = as.numeric(substr(year, nchar(year)-1, nchar(year))))
+
+write.csv(cohorts_pct_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/cohort_pct.csv")
+```
+
+
+
+# Function for mandate percentages (important)
+
+Use this to calculate percentage breakdown over time by fund type.
+
+```{r}
+# To use this function, insert:
+  # data
+  # mandate (Strategic, Hybrid, Financial),
+  # name of the question you want to analyze (without the suffix '_from_xx')
+  # name you want the column in the new dataset to be
+
+# for example, to calculate breakdown of strategic CVCs that take LP positions:
+   #  strategic_lp <- mandate_func(df, "Strategic", "takes_lp_positions", "takes_lp?")
+   #  strategic_lp will be a long format dataframe that you can use for analysis
+   #  will look like this (percentages are made up):
+
+                # takes_lp? | year | percentage
+                # ++++++++++++++++++++++++++++++
+                #  Yes      |  21  |    0.2
+                #  Yes      |  22  |    0.6      
+                #  Yes      |  23  |    0.73
+                #  Yes      |  24  |    0.5
+                #  No       |  21  |    0.8 
+                #  No       |  22  |    0.4 
+                #  No       |  23  |    0.27 
+                #  no       |  24  |    0.5 
+
+
+mandate_func <- function(df, mandate_name, var_name, col_name){
+  
+  name_21 <- paste0(var_name, "_from_21")
+  name_22 <- paste0(var_name, "_from_22")
+  name_23 <- paste0(var_name, "_from_23")
+  name_24 <- paste0(var_name, "_from_24")
+  
+  pct_21 <- df %>%
+    filter(mandate_from_21 == mandate_name) %>%
+    select(all_of(name_21)) %>%
+    calculate_percentage(name_21)
+  names(pct_21) <- c(col_name, "pct_21")
+  
+  pct_22 <- df %>%
+    filter(mandate_from_22 == mandate_name) %>%
+    select(all_of(name_22)) %>%
+    calculate_percentage(name_22)
+  names(pct_22) <- c(col_name, "pct_22")
+  
+  pct_23 <- df %>%
+    filter(mandate_from_23 == mandate_name) %>%
+    select(all_of(name_23)) %>%
+    calculate_percentage(name_23)
+  names(pct_23) <- c(col_name, "pct_23")
+  
+  pct_24 <- df %>%
+    filter(mandate_from_24 == mandate_name) %>%
+    select(all_of(name_24)) %>%
+    calculate_percentage(name_24)
+  names(pct_24) <- c(col_name, "pct_24")
+  
+  pct_4_years <- merge(pct_21, pct_22, by = col_name) %>%
+    merge(pct_23, by = col_name) %>%
+    merge(pct_24, by = col_name) 
+  
+  pct_long <- pct_4_years %>%
+    pivot_longer(cols = starts_with("pct_"), names_to = "year", values_to = "percentage") %>%
+    mutate(year = as.numeric(substr(year, nchar(year)-1, nchar(year))))
+  
+}
+```
+
+# Cohort function
+```{r}
+cohort_func <- function(df, cohort, var_name, col_name){
+  
+  name_21 <- paste0(var_name, "_from_21")
+  name_22 <- paste0(var_name, "_from_22")
+  name_23 <- paste0(var_name, "_from_23")
+  name_24 <- paste0(var_name, "_from_24")
+  
+  pct_21 <- df %>%
+    filter(fund_category_from_21 == cohort) %>%
+    select(all_of(name_21)) %>%
+    separate_rows(name_21, sep = "; ") %>%
+    calculate_percentage(name_21)
+  names(pct_21) <- c(col_name, "pct_21")
+  
+  pct_22 <- df %>%
+    filter(fund_category_from_22 == cohort) %>%
+    select(all_of(name_22)) %>%
+    separate_rows(name_22, sep = "#") %>%
+    calculate_percentage(name_22)
+  names(pct_22) <- c(col_name, "pct_22")
+  
+  pct_23 <- df %>%
+    filter(fund_category_from_23 == cohort) %>%
+    select(all_of(name_23)) %>%
+    separate_rows(name_23, sep = "\r\n") %>%
+    calculate_percentage(name_23) 
+  names(pct_23) <- c(col_name, "pct_23")
+  
+  pct_24 <- df %>%
+    filter(fund_category_from_24 == cohort) %>%
+    select(all_of(name_24)) %>%
+    separate_rows(name_24, sep = "\r\n") %>%
+    calculate_percentage(name_24)
+  names(pct_24) <- c(col_name, "pct_24")
+  
+  pct_4_years <- merge(pct_21, pct_22, by = col_name) %>%
+    merge(pct_23, by = col_name) %>%
+    merge(pct_24, by = col_name) 
+  
+  pct_long <- pct_4_years %>%
+    pivot_longer(cols = starts_with("pct_"), names_to = "year", values_to = "percentage") %>%
+    mutate(year = as.numeric(substr(year, nchar(year)-1, nchar(year)))) %>%
+    mutate(fund_category = rep(cohort, n()))
+  
+}
+```
+
+
+# Goals of CVC 
+Note: can't use the `mandate_func` here because I needed to separate out the rows.
+
+
+## Strategic Goals
+```{r}
+goals <- c("Source potential M&A target",
+           "Augment existing business and/or accelerate the commercialization with business unit or R&D",
+           "Sensor to understand emerging + future trends and new markets"
+           )
+
+strat_goal_21 <- df %>%
+  select(strat_execsponsor_goal_from_21, mandate_from_21) %>%
+  filter(mandate_from_21 == "Strategic") %>%
+  separate_rows(strat_execsponsor_goal_from_21, sep = "; ") %>%
+  mutate(strat_execsponsor_goal_from_21 = ifelse(strat_execsponsor_goal_from_21 %in% goals,
+                                                 strat_execsponsor_goal_from_21, "Other")) %>%
+  calculate_percentage("strat_execsponsor_goal_from_21") 
+names(strat_goal_21) <- c("goal", "pct_21")
+
+
+strat_goal_22 <- df %>%
+  select(strat_execsponsor_goal_from_22, mandate_from_22) %>%
+  filter(mandate_from_22 == "Strategic") %>%
+  separate_rows(strat_execsponsor_goal_from_22, sep = "#") %>%
+  mutate(strat_execsponsor_goal_from_22 = ifelse(strat_execsponsor_goal_from_22 %in% goals,
+                                                 strat_execsponsor_goal_from_22, "Other")) %>%
+  calculate_percentage("strat_execsponsor_goal_from_22")
+names(strat_goal_22) <- c("goal", "pct_22")
+
+strat_goal_23 <- df %>%
+  select(strat_execsponsor_goal_from_23, mandate_from_23) %>%
+  filter(mandate_from_23 == "Strategic") %>%
+  separate_rows(strat_execsponsor_goal_from_23, sep = "\r\n") %>%
+  mutate(strat_execsponsor_goal_from_23 = ifelse(strat_execsponsor_goal_from_23 %in% goals,
+                                                 strat_execsponsor_goal_from_23, "Other")) %>%
+  calculate_percentage("strat_execsponsor_goal_from_23")
+names(strat_goal_23) <- c("goal", "pct_23")
+
+strat_goal_24 <- df %>%
+  select(strat_execsponsor_goal_from_24, mandate_from_24) %>%
+  filter(mandate_from_24 == "Strategic") %>%
+  separate_rows(strat_execsponsor_goal_from_24, sep = "\r\n") %>%
+  mutate(strat_execsponsor_goal_from_24 = ifelse(strat_execsponsor_goal_from_24 %in% goals,
+                                                 strat_execsponsor_goal_from_24, "Other")) %>%
+  calculate_percentage("strat_execsponsor_goal_from_24")
+names(strat_goal_24) <- c("goal", "pct_24")
+
+strat_goal_4_years <- merge(strat_goal_21, strat_goal_22, by = "goal") %>%
+  merge(strat_goal_23, by = "goal") %>%
+  merge(strat_goal_24, by = "goal")  %>%
+  slice(c(2,4,1,3))
+
+strat_goal_long <- strat_goal_4_years %>%
+  pivot_longer(cols = starts_with("pct_"), names_to = "year", values_to = "percentage") %>%
+  mutate(year = as.numeric(substr(year, nchar(year)-1, nchar(year))))
+write.csv(strat_goal_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/strat_goal.csv")
+```
+
+
+## Hybrid Goals
+
+```{r}
+hybrid_goal_21 <- df %>%
+  select(strat_execsponsor_goal_from_21, mandate_from_21) %>%
+  filter(mandate_from_21 == "Hybrid") %>%
+  separate_rows(strat_execsponsor_goal_from_21, sep = "; ") %>%
+  mutate(strat_execsponsor_goal_from_21 = ifelse(strat_execsponsor_goal_from_21 %in% goals,
+                                                 strat_execsponsor_goal_from_21, "Other")) %>%
+  calculate_percentage("strat_execsponsor_goal_from_21")
+  
+names(hybrid_goal_21) <- c("goal", "pct_21")
+
+
+hybrid_goal_22 <- df %>%
+  select(strat_execsponsor_goal_from_22, mandate_from_22) %>%
+  filter(mandate_from_22 == "Hybrid") %>%
+  separate_rows(strat_execsponsor_goal_from_22, sep = "#") %>%
+  mutate(strat_execsponsor_goal_from_22 = ifelse(strat_execsponsor_goal_from_22 %in% goals,
+                                                 strat_execsponsor_goal_from_22, "Other")) %>%
+  calculate_percentage("strat_execsponsor_goal_from_22")
+names(hybrid_goal_22) <- c("goal", "pct_22")
+
+hybrid_goal_23 <- df %>%
+  select(strat_execsponsor_goal_from_23, mandate_from_23) %>%
+  filter(mandate_from_23 == "Hybrid") %>%
+  separate_rows(strat_execsponsor_goal_from_23, sep = "\r\n") %>%
+  mutate(strat_execsponsor_goal_from_23 = ifelse(strat_execsponsor_goal_from_23 %in% goals,
+                                                 strat_execsponsor_goal_from_23, "Other")) %>%
+  calculate_percentage("strat_execsponsor_goal_from_23")
+names(hybrid_goal_23) <- c("goal", "pct_23")
+
+hybrid_goal_24 <- df %>%
+  select(strat_execsponsor_goal_from_24, mandate_from_24) %>%
+  filter(mandate_from_24 == "Hybrid") %>%
+  separate_rows(strat_execsponsor_goal_from_24, sep = "\r\n") %>%
+  mutate(strat_execsponsor_goal_from_24 = ifelse(strat_execsponsor_goal_from_24 %in% goals,
+                                                 strat_execsponsor_goal_from_24, "Other")) %>%
+  calculate_percentage("strat_execsponsor_goal_from_24")
+names(hybrid_goal_24) <- c("goal", "pct_24")
+
+hybrid_goal_4_years <- merge(hybrid_goal_21, hybrid_goal_22, by = "goal") %>%
+  merge(hybrid_goal_23, by = "goal") %>%
+  merge(hybrid_goal_24, by = "goal") %>%
+  slice(c(2,4,1,3))
+
+hybrid_goal_long <- hybrid_goal_4_years %>%
+  pivot_longer(cols = starts_with("pct_"), names_to = "year", values_to = "percentage") %>%
+  mutate(year = as.numeric(substr(year, nchar(year)-1, nchar(year))))
+write.csv(hybrid_goal_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/hybrid_goal.csv")
+```
+
+## Financial Goals
+
+```{r}
+fin_goal_21 <- df %>%
+  select(strat_execsponsor_goal_from_21, mandate_from_21) %>%
+  filter(mandate_from_21 == "Financial") %>%
+  separate_rows(strat_execsponsor_goal_from_21, sep = "; ") %>%
+  mutate(strat_execsponsor_goal_from_21 = ifelse(strat_execsponsor_goal_from_21 %in% goals,
+                                                 strat_execsponsor_goal_from_21, "Other")) %>%
+  calculate_percentage("strat_execsponsor_goal_from_21") %>%
+  rbind(c("Source potential M&A target", 0))
+  
+names(fin_goal_21) <- c("goal", "pct_21")
+fin_goal_21$pct_21 <- as.numeric(fin_goal_21$pct_21)
+
+
+fin_goal_22 <- df %>%
+  select(strat_execsponsor_goal_from_22, mandate_from_22) %>%
+  filter(mandate_from_22 == "Financial") %>%
+  separate_rows(strat_execsponsor_goal_from_22, sep = "#") %>%
+  mutate(strat_execsponsor_goal_from_22 = ifelse(strat_execsponsor_goal_from_22 %in% goals,
+                                                 strat_execsponsor_goal_from_22, "Other")) %>%
+  calculate_percentage("strat_execsponsor_goal_from_22")
+names(fin_goal_22) <- c("goal", "pct_22")
+
+fin_goal_23 <- df %>%
+  select(strat_execsponsor_goal_from_23, mandate_from_23) %>%
+  filter(mandate_from_23 == "Financial") %>%
+  separate_rows(strat_execsponsor_goal_from_23, sep = "\r\n") %>%
+  mutate(strat_execsponsor_goal_from_23 = ifelse(strat_execsponsor_goal_from_23 %in% goals,
+                                                 strat_execsponsor_goal_from_23, "Other")) %>%
+  calculate_percentage("strat_execsponsor_goal_from_23")
+names(fin_goal_23) <- c("goal", "pct_23")
+
+fin_goal_24 <- df %>%
+  select(strat_execsponsor_goal_from_24, mandate_from_24) %>%
+  filter(mandate_from_24 == "Financial") %>%
+  separate_rows(strat_execsponsor_goal_from_24, sep = "\r\n") %>%
+  mutate(strat_execsponsor_goal_from_24 = ifelse(strat_execsponsor_goal_from_24 %in% goals,
+                                                 strat_execsponsor_goal_from_24, "Other")) %>%
+  calculate_percentage("strat_execsponsor_goal_from_24")
+names(fin_goal_24) <- c("goal", "pct_24")
+
+fin_goal_4_years <- merge(fin_goal_21, fin_goal_22, by = "goal") %>%
+  merge(fin_goal_23, by = "goal") %>%
+  merge(fin_goal_24, by = "goal") %>%
+  slice(c(2,4,1,3))
+
+fin_goal_long <- fin_goal_4_years %>%
+  pivot_longer(cols = starts_with("pct_"), names_to = "year", values_to = "percentage") %>%
+  mutate(year = as.numeric(substr(year, nchar(year)-1, nchar(year))))
+write.csv(fin_goal_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/fin_goal.csv")
+```
+
+
+## Overall Goals in 2022
+```{r}
+goals_overall_22 <- df %>%
+  select(strat_execsponsor_goal_from_22) %>%
+  separate_rows(strat_execsponsor_goal_from_22, sep = "#") %>%
+  mutate(strat_execsponsor_goal_from_22 = ifelse(strat_execsponsor_goal_from_22 %in% goals,
+                                                 strat_execsponsor_goal_from_22, "Other")) %>%
+  calculate_percentage("strat_execsponsor_goal_from_22")
+```
+
+
+## Looking at "Other" in 2022
+```{r}
+goal_22 <- df %>%
+  select(cvc_name, mandate_from_22, strat_execsponsor_goal_from_22) %>%
+  separate_rows(strat_execsponsor_goal_from_22, sep = "#") %>%
+  separate_rows(strat_execsponsor_goal_from_22, sep = "\r\n") %>%
+  filter(!(strat_execsponsor_goal_from_22 %in% goals)) %>%
+  na.omit()
+
+strat_goal_22 <- goal_22 %>%
+  calculate_percentage("strat_execsponsor_goal_from_22")
+
+write.csv(strat_goal_22, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/strat_goal_22.csv")
+```
+
+
+# Takes LP Positions
+```{r}
+strat_lp_long <- mandate_func(df, "Strategic", "takes_lp_positions", "takes_lp")
+hybrid_lp_long <- mandate_func(df, "Hybrid", "takes_lp_positions", "takes_lp")
+fin_lp_long <- mandate_func(df, "Financial", "takes_lp_positions", "takes_lp")
+
+write.csv(strat_lp_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/strat_lp.csv")
+write.csv(hybrid_lp_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/hybrid_lp.csv")
+write.csv(fin_lp_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/fin_lp.csv")
+```
+
+
+
+
+
+
+
+# Managing corporate parent
+
+```{r}
+parent <- df %>%
+  select(time_spent_strat_lp_management_from_21, time_spent_strat_lp_management_from_22,
+         time_spent_strat_lp_management_from_23, time_spent_strat_lp_management_from_24)
+
+
+parent_fn <- function(col){
+  case_when(
+    col == "< 20%" ~ "< 40%",
+    col == "20-40%" ~ "< 40%",
+    col == "40-60%" ~ "> 40%",
+    col == "> 60%" ~ "> 40%",
+  )
+}
+
+parent <- parent %>%
+  lapply(parent_fn) %>%
+  lapply(calculate_percentage_col)
+
+merge_parent <- parent[[1]]
+for(i in 2:length(parent)){
+  merge_parent <- merge(merge_parent, parent[[i]], by = "category", all = TRUE)
+}
+names(merge_parent) <- c("Time", "pct_21", "pct_22", "pct_23", "pct_24")
+
+parent_long <- merge_parent %>%
+  pivot_longer(cols = starts_with("pct_"), names_to = "year", values_to = "percentage") %>%
+  mutate(year = as.numeric(substr(year, nchar(year)-1, nchar(year)))) 
+write.csv(parent_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/parent.csv")
+```
+
+## By Fund Type 
+
+```{r}
+parent_fn <- function(col){
+  ifelse(col %in% c("40-60%", "> 60%"),"> 40%", "< 40%")
+}
+
+parent <- df %>%
+  select(mandate_from_21, mandate_from_22, mandate_from_23, mandate_from_24,
+         time_spent_strat_lp_management_from_21, time_spent_strat_lp_management_from_22,
+         time_spent_strat_lp_management_from_23, time_spent_strat_lp_management_from_24) %>%
+  mutate(time_spent_strat_lp_management_from_21 = parent_fn(time_spent_strat_lp_management_from_21),
+         time_spent_strat_lp_management_from_22 = parent_fn(time_spent_strat_lp_management_from_22),
+         time_spent_strat_lp_management_from_23 = parent_fn(time_spent_strat_lp_management_from_23),
+         time_spent_strat_lp_management_from_24 = parent_fn(time_spent_strat_lp_management_from_24))
+
+strat_parent_long <- mandate_func(parent, "Strategic", "time_spent_strat_lp_management", "time")
+hybrid_parent_long <- mandate_func(parent, "Hybrid", "time_spent_strat_lp_management", "time")
+fin_parent_long <- mandate_func(parent, "Financial", "time_spent_strat_lp_management", "time")
+
+write.csv(strat_parent_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/strat_parent.csv")
+write.csv(hybrid_parent_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/hybrid_parent.csv")
+write.csv(fin_parent_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/fin_parent.csv")
+```
+
+
+
+
+
+# Business Engagement
+
+Note: I also could not use the mandate function here because I needed to separate out the rows.
+
+## by year founded
+```{r}
+newbie_engagement <- cohort_func(df, "Newbie", "engagement_for_investment", "engagement")
+intermediate_engagement <- cohort_func(df, "Intermediate", "engagement_for_investment", "engagement")
+mature_engagement <- cohort_func(df, "Mature", "engagement_for_investment", "engagement")
+
+engagement_by_status <- rbind(newbie_engagement, intermediate_engagement, mature_engagement)
+
+write.csv(engagement_by_status, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/engagement_by_year.csv")
+```
+
+
+
+## Survive without CFO medium
+```{r}
+engagement <- c("None", "Some", "Significant")
+
+medium_engagement_24 <- df %>%
+  filter(survive_without_CFO_from_24 == "Medium") %>%
+  separate_rows(engagement_for_investment_from_24, sep = "\r\n") %>%
+  select(engagement_for_investment_from_24) %>%
+  calculate_percentage("engagement_for_investment_from_24")
+names(medium_engagement_24) <- c("level", "pct_md")
+
+high_engagement_24 <- df %>%
+  filter(survive_without_CFO_from_24 == "High") %>%
+  separate_rows(engagement_for_investment_from_24, sep = "\r\n") %>%
+  select(engagement_for_investment_from_24) %>%
+  calculate_percentage("engagement_for_investment_from_24")
+names(high_engagement_24) <- c("level", "pct_hi")
+
+
+engagement_cfo_departs <- merge(medium_engagement_24, high_engagement_24, by = "level") 
+
+engagement_cfo_long <- engagement_cfo_departs %>%
+  pivot_longer(cols = starts_with("pct_"), names_to = "survivability", values_to = "percentage") %>%
+  mutate(survivability = substr(survivability, nchar(survivability)-1, nchar(survivability)))
+write.csv(engagement_cfo_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/engagement_cfo.csv")
+```
+
+## Strategic
+```{r}
+engagement <- c("None", "Some", "Significant")
+
+strat_engagement_21 <- df %>%
+  select(mandate_from_21, engagement_for_investment_from_21) %>%
+  filter(mandate_from_21 == "Strategic") %>%
+  calculate_percentage("engagement_for_investment_from_21")
+names(strat_engagement_21) <- c("level", "pct_21")
+
+strat_engagement_22 <- df %>%
+  select(mandate_from_22, engagement_for_investment_from_22) %>%
+  filter(mandate_from_22 == "Strategic") %>%
+  separate_rows(engagement_for_investment_from_22, sep = "#") %>%
+  mutate(engagement_for_investment_from_22 =
+           ifelse(engagement_for_investment_from_22 == "Required", 
+                  "Significant",engagement_for_investment_from_22)) %>%
+  filter(engagement_for_investment_from_22 %in% engagement) %>%
+  calculate_percentage("engagement_for_investment_from_22")
+names(strat_engagement_22) <- c("level", "pct_22")
+
+strat_engagement_23 <- df %>%
+  select(mandate_from_23, engagement_for_investment_from_23) %>%
+  filter(mandate_from_23 == "Strategic") %>%
+  separate_rows(engagement_for_investment_from_23, sep = "\r\n") %>%
+  calculate_percentage("engagement_for_investment_from_23")
+names(strat_engagement_23) <- c("level", "pct_23")
+
+strat_engagement_24 <- df %>%
+  select(mandate_from_24, engagement_for_investment_from_24) %>%
+  filter(mandate_from_24 == "Strategic") %>%
+  separate_rows(engagement_for_investment_from_24, sep = "\r\n") %>%
+  calculate_percentage("engagement_for_investment_from_24")
+names(strat_engagement_24) <- c("level", "pct_24")
+
+strat_engagement_4_years <- merge(strat_engagement_21, strat_engagement_22, by = "level") %>%
+  merge(strat_engagement_23, by = "level") %>%
+  merge(strat_engagement_24, by = "level") 
+
+strat_engagement_long <- strat_engagement_4_years %>%
+  pivot_longer(cols = starts_with("pct_"), names_to = "year", values_to = "percentage") %>%
+  mutate(year = as.numeric(substr(year, nchar(year)-1, nchar(year))))
+write.csv(strat_engagement_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/strat_engagement.csv")
+```
+
+## Hybrid
+```{r}
+hybrid_engagement_21 <- df %>%
+  select(mandate_from_21, engagement_for_investment_from_21) %>%
+  filter(mandate_from_21 == "Hybrid") %>%
+  filter(engagement_for_investment_from_21 %in% engagement) %>%
+  calculate_percentage("engagement_for_investment_from_21")
+names(hybrid_engagement_21) <- c("level", "pct_21")
+
+hybrid_engagement_22 <- df %>%
+  select(mandate_from_22, engagement_for_investment_from_22) %>%
+  filter(mandate_from_22 == "Hybrid") %>%
+  separate_rows(engagement_for_investment_from_22, sep = "#") %>%
+  mutate(engagement_for_investment_from_22 =
+           ifelse(engagement_for_investment_from_22 == "Required", 
+                  "Significant",engagement_for_investment_from_22)) %>%
+  filter(engagement_for_investment_from_22 %in% engagement) %>%
+  calculate_percentage("engagement_for_investment_from_22")
+names(hybrid_engagement_22) <- c("level", "pct_22")
+
+hybrid_engagement_23 <- df %>%
+  select(mandate_from_23, engagement_for_investment_from_23) %>%
+  filter(mandate_from_23 == "Hybrid") %>%
+  separate_rows(engagement_for_investment_from_23, sep = "\r\n") %>%
+  filter(engagement_for_investment_from_23 %in% engagement) %>%
+  calculate_percentage("engagement_for_investment_from_23")
+names(hybrid_engagement_23) <- c("level", "pct_23")
+
+hybrid_engagement_24 <- df %>%
+  select(mandate_from_24, engagement_for_investment_from_24) %>%
+  filter(mandate_from_24 == "Hybrid") %>%
+  separate_rows(engagement_for_investment_from_24, sep = "\r\n") %>%
+  filter(engagement_for_investment_from_24 %in% engagement) %>%
+  calculate_percentage("engagement_for_investment_from_24")
+names(hybrid_engagement_24) <- c("level", "pct_24")
+
+hybrid_engagement_4_years <- merge(hybrid_engagement_21, hybrid_engagement_22, by = "level") %>%
+  merge(hybrid_engagement_23, by = "level") %>%
+  merge(hybrid_engagement_24, by = "level") 
+
+hybrid_engagement_long <- hybrid_engagement_4_years %>%
+  pivot_longer(cols = starts_with("pct_"), names_to = "year", values_to = "percentage") %>%
+  mutate(year = as.numeric(substr(year, nchar(year)-1, nchar(year))))
+write.csv(hybrid_engagement_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/hybrid_engagement.csv")
+```
+
+## Financial
+
+```{r}
+fin_engagement_21 <- df %>%
+  select(mandate_from_21, engagement_for_investment_from_21) %>%
+  filter(mandate_from_21 == "Financial") %>%
+  filter(engagement_for_investment_from_21 %in% engagement) %>%
+  calculate_percentage("engagement_for_investment_from_21")
+names(fin_engagement_21) <- c("level", "pct_21")
+
+fin_engagement_22 <- df %>%
+  select(mandate_from_22, engagement_for_investment_from_22) %>%
+  filter(mandate_from_22 == "Financial") %>%
+  separate_rows(engagement_for_investment_from_22, sep = "#") %>%
+  mutate(engagement_for_investment_from_22 =
+           ifelse(engagement_for_investment_from_22 == "Required", 
+                  "Significant",engagement_for_investment_from_22)) %>%
+  filter(engagement_for_investment_from_22 %in% engagement) %>%
+  calculate_percentage("engagement_for_investment_from_22")
+names(fin_engagement_22) <- c("level", "pct_22")
+
+fin_engagement_23 <- df %>%
+  select(mandate_from_23, engagement_for_investment_from_23) %>%
+  filter(mandate_from_23 == "Financial") %>%
+  separate_rows(engagement_for_investment_from_23, sep = "\r\n") %>%
+  filter(engagement_for_investment_from_23 %in% engagement) %>%
+  calculate_percentage("engagement_for_investment_from_23")
+names(fin_engagement_23) <- c("level", "pct_23")
+
+fin_engagement_24 <- df %>%
+  select(mandate_from_24, engagement_for_investment_from_24) %>%
+  filter(mandate_from_24 == "Financial") %>%
+  separate_rows(engagement_for_investment_from_24, sep = "\r\n") %>%
+  filter(engagement_for_investment_from_24 %in% engagement) %>%
+  calculate_percentage("engagement_for_investment_from_24")
+names(fin_engagement_24) <- c("level", "pct_24")
+
+fin_engagement_4_years <- merge(fin_engagement_21, fin_engagement_22, by = "level") %>%
+  merge(fin_engagement_23, by = "level") %>%
+  merge(fin_engagement_24, by = "level") 
+
+fin_engagement_long <- fin_engagement_4_years %>%
+  pivot_longer(cols = starts_with("pct_"), names_to = "year", values_to = "percentage") %>%
+  mutate(year = as.numeric(substr(year, nchar(year)-1, nchar(year))))
+write.csv(fin_engagement_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/fin_engagement.csv")
+```
+
+
+
+
+# CVC Head Info
+
+## Tenure
+```{r}
+tenure_pre15 <- df %>%
+  filter(year_launched_from_23 < 2015) %>%
+  select(cvc_head_tenure_from_21, cvc_head_tenure_from_22, 
+         cvc_head_tenure_from_23, cvc_head_tenure_from_24)
+
+tenure_post15 <- df %>%
+  filter(year_launched_from_23 >= 2015) %>%
+  select(cvc_head_tenure_from_21, cvc_head_tenure_from_22, 
+         cvc_head_tenure_from_23, cvc_head_tenure_from_24)
+
+tenure_cat <- function(col){ 
+  case_when(
+    col < 1 ~ "< 1",
+    col == 1 ~ "1",
+    col == 2 ~ "2",
+    col >= 3 & col < 6 ~ "3-5",
+    col >= 6 & col < 11 ~ "6-10",
+    col >= 11 ~ "11+"
+  )
+}
+
+tenure_pre <- data.frame(lapply(tenure_pre15, tenure_cat)) %>%
+  lapply(calculate_percentage_col) 
+
+tenure_post <-data.frame(lapply(tenure_post15, tenure_cat)) %>%
+  lapply(calculate_percentage_col)
+
+merged_pre <- tenure_pre[[1]]
+for (i in 2:length(tenure_pre)) {
+  merged_pre <- merge(merged_pre, tenure_pre[[i]], by = "category", all = TRUE)
+}
+names(merged_pre) <- c("category", "pct_21", "pct_22", "pct_23", "pct_24")
+
+merged_post <- tenure_post[[1]]
+for (i in 2:length(tenure_post)) {
+  merged_post <- merge(merged_post, tenure_post[[i]], by = "category", all = TRUE)
+}
+names(merged_post) <- c("category", "pct_21", "pct_22", "pct_23", "pct_24")
+
+tenure_pre_long <- merged_pre %>%
+  pivot_longer(cols = starts_with("pct_"), names_to = "year", values_to = "percentage") %>%
+  mutate(year = as.numeric(substr(year, nchar(year)-1, nchar(year)))) %>%
+  replace_na(list(percentage = 0)) %>%
+  cbind(year_founded = rep("Pre-2015", nrow(merged_pre)*4))
+
+tenure_post_long <- merged_post %>%
+  pivot_longer(cols = starts_with("pct_"), names_to = "year", values_to = "percentage") %>%
+  mutate(year = as.numeric(substr(year, nchar(year)-1, nchar(year)))) %>%
+  replace_na(list(percentage = 0)) %>%
+  cbind(year_founded = rep("2015-Current", nrow(merged_post)*4))
+
+tenure_long <- rbind(tenure_pre_long, tenure_post_long)
+
+write.csv(tenure_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/head_tenure.csv")
+```
+
+
+
+
+
+## Head Gender
+
+```{r}
+gender <- df %>%
+  select(gender_head_from_21, gender_head_from_22, gender_head_from_23, gender_head_from_24) %>%
+  lapply(calculate_percentage_col)
+
+gender[[4]] <- gender[[4]][-1,]
+
+merge_gender <- gender[[1]]
+for (i in 2:length(gender)){
+  merge_gender <- merge(merge_gender, gender[[i]], by = "category", all = TRUE)
+}
+names(merge_gender) <- c("Gender", "pct_21", "pct_22", "pct_23", "pct_24")
+
+gender_long <- merge_gender %>%
+  pivot_longer(cols = starts_with("pct_"), names_to = "year", values_to = "percentage") %>%
+  mutate(year = as.numeric(substr(year, nchar(year)-1, nchar(year)))) 
+write.csv(gender_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/head_gender.csv")
+```
+
+
+
+# Female/minority Investors
+```{r}
+female <- df %>%
+  select(female_minority_investors_from_21, female_minority_investors_from_23,
+         female_minority_investors_from_24)
+
+female_pct <- function(col){
+  case_when(
+    col < 10 ~ "< 10%",
+    col >= 10 & col <= 25 ~ "10-25%",
+    col > 25 & col <= 50 ~ "25-50%",
+    col > 50 & col <= 75 ~ "50-75%",
+    col > 75 ~ "> 75%"
+  )
+}
+
+female <- female %>%
+  lapply(female_pct) %>%
+  lapply(calculate_percentage_col)
+
+merge_female <- female[[1]]
+for (i in 2:length(female)){
+  merge_female <- merge(merge_female, female[[i]], by = "category", all = TRUE)
+}
+names(merge_female) <- c("female", "pct_21", "pct_23", "pct_24")
+
+pct_22 <- calculate_percentage_col(df$female_minority_investors_from_22)[,2]
+
+merge_female <- cbind(merge_female[,1:2], pct_22 = pct_22, merge_female[,3:4])
+
+female_long <- merge_female %>%
+  pivot_longer(cols = starts_with("pct_"), names_to = "year", values_to = "percentage") %>%
+  mutate(year = as.numeric(substr(year, nchar(year)-1, nchar(year)))) 
+
+write.csv(female_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/female_investors.csv")
+
+```
+
+
+
+
+# Investors Receive Carry
+```{r}
+carry <- df %>%
+  select(investors_receive_carry_from_21, investors_receive_carry_from_22,
+         investors_receive_carry_from_23, investors_receive_carry_from_24) %>%
+  lapply(calculate_percentage_col)
+
+merge_carry <- carry[[1]]
+for(i in 2:length(carry)){
+  merge_carry <- merge(merge_carry, carry[[i]], by = "category", all = TRUE)
+}
+names(merge_carry) <-c("receive_carry", "pct_21", "pct_22", "pct_23", "pct_24") 
+
+carry_long <- merge_carry %>%
+  pivot_longer(cols = starts_with("pct_"), names_to = "year", values_to = "percentage") %>%
+  mutate(year = as.numeric(substr(year, nchar(year)-1, nchar(year)))) 
+write.csv(carry_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/carry.csv")
+```
+
+
+## By fund Type
+```{r}
+strat_carry_long <- mandate_func(df, "Strategic", "investors_receive_carry", "carry")
+hybrid_carry_long <- mandate_func(df, "Hybrid", "investors_receive_carry", "carry")
+fin_carry_long <- mandate_func(df, "Financial", "investors_receive_carry", "carry")
+
+
+write.csv(strat_carry_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/strat_carry.csv")
+write.csv(hybrid_carry_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/hybrid_carry.csv")
+write.csv(fin_carry_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/fin_carry.csv")
+```
+
+## based on year founded
+```{r}
+newbie_carry <- cohort_func(df, "Newbie", "investors_receive_carry", "carry")
+intermed_carry <- cohort_func(df, "Intermediate", "investors_receive_carry", "carry")
+mature_carry <- cohort_func(df, "Mature", "investors_receive_carry", "carry")
+
+carry_by_year <- rbind(newbie_carry, intermed_carry, mature_carry)
+
+write.csv(carry_by_year, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/carry_year.csv")
+```
+
+
+
+
+# NPS Score
+```{r}
+nps <- df %>%
+  select(public_private, nps_score_from_21, nps_score_from_22, 
+         nps_score_from_23, nps_score_from_24) %>%
+  pivot_longer(cols = starts_with("nps_score"), names_to = "year", values_to = "nps") %>%
+  mutate(year = as.numeric(substr(year, nchar(year)-1, nchar(year)))) 
+
+write.csv(nps, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/nps.csv")
+```
+
+
+
+# Strategic or Independent
+
+```{r}
+strat_indep_long <- mandate_func(df, "Strategic", "strategic_or_independent", "category")
+hybrid_indep_long <- mandate_func(df, "Hybrid", "strategic_or_independent", "category")
+fin_indep_long <- mandate_func(df, "Financial", "strategic_or_independent", "category")
+
+write.csv(strat_indep_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/strat_indep.csv")
+write.csv(hybrid_indep_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/hybrid_indep.csv")
+write.csv(fin_indep_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/fin_indep.csv")
+```
+
+
+## By year founded
+
+```{r}
+newbie_strat_indep <- cohort_func(df, "Newbie", "strategic_or_independent", "strat_indep")
+intermed_strat_indep <- cohort_func(df, "Intermediate", "strategic_or_independent", "strat_indep")
+mature_strat_indep <- cohort_func(df, "Mature", "strategic_or_independent", "strat_indep")
+
+strat_indep_by_year <- rbind(newbie_strat_indep, intermed_strat_indep, mature_strat_indep)
+
+
+write.csv(strat_indep_by_year, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/strat_indep_year.csv")
+```
+
+
+# Capital Reserves
+
+```{r}
+strat_cap_long <- mandate_func(df, "Strategic", "formal_capital_reserves_followon", "category")
+hybrid_cap_long <- mandate_func(df, "Hybrid", "formal_capital_reserves_followon", "category")
+fin_cap_long <- mandate_func(df, "Financial", "formal_capital_reserves_followon", "category")
+
+write.csv(strat_cap_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/strat_cap.csv")
+write.csv(hybrid_cap_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/hybrid_cap.csv")
+write.csv(fin_cap_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/fin_cap.csv")
+```
+
+## By year founded
+
+
+# Investment Pace
+
+```{r}
+pace <- df %>%
+  select(mandate_from_21, mandate_from_22, mandate_from_23, mandate_from_24,
+         deal_pace_12_from_21, deal_pace_12_from_22, deal_pace_12_from_23,
+         investment_pace_past5_from_24) %>%
+  mutate(deal_pace_12_from_24 = investment_pace_past5_from_24) %>%
+  select(-investment_pace_past5_from_24)
+
+strat_pace_long <- mandate_func(pace, "Strategic", "deal_pace_12", "pace")
+hybrid_pace_long <- mandate_func(pace, "Hybrid", "deal_pace_12", "pace")
+fin_pace_long <- mandate_func(pace, "Financial", "deal_pace_12", "pace")
+
+write.csv(strat_pace_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/strat_pace.csv")
+write.csv(hybrid_pace_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/hybrid_pace.csv")
+write.csv(fin_pace_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/fin_pace.csv")
+```
+
+
+
+# Investment Allocation
+
+```{r}
+alloc_func <- function(df, cohort, var_name, col_name){
+  
+  name_21 <- paste0(var_name, "_from_21")
+  name_22 <- paste0(var_name, "_from_22")
+  name_23 <- paste0(var_name, "_from_23")
+  name_24 <- paste0(var_name, "_from_24")
+  
+  pct_21 <- df %>%
+    filter(fund_category_from_21 == cohort) %>%
+    select(all_of(name_21)) %>%
+    mutate(year = 21)
+  names(pct_21)[1] <- c(col_name)
+  
+  pct_22 <- df %>%
+    filter(fund_category_from_22 == cohort) %>%
+    select(all_of(name_22)) %>%
+    mutate(year = 22)
+  names(pct_22)[1] <- c(col_name)
+  
+  pct_23 <- df %>%
+    filter(fund_category_from_23 == cohort) %>%
+    select(all_of(name_23)) %>%
+    mutate(year = 23)
+  names(pct_23)[1] <- c(col_name)
+  
+  pct_24 <- df %>%
+    filter(fund_category_from_24 == cohort) %>%
+    select(all_of(name_24)) %>%
+    mutate(year = 24)
+  names(pct_24)[1] <- c(col_name)
+  
+  pct_long <- rbind(pct_21, pct_22, pct_23, pct_24) %>%
+    mutate(fund_category = rep(cohort, n()))
+}
+```
+
+
+
+
+```{r}
+df$invest_allocation_per_annum_from_22 <- as.numeric(df$invest_allocation_per_annum_from_22)
+
+allocation_subset <- df %>%
+  select(fund_category_from_21, fund_category_from_22, fund_category_from_23, fund_category_from_24,
+         invest_allocation_per_annum_from_21, invest_allocation_per_annum_from_22,
+         invest_allocation_per_annum_from_23, invest_allocation_per_annum_from_24)
+
+allocation_fn <- function(col){
+  case_when(
+    col < 50  ~ "< $50M",
+    col >= 50 & col < 100 ~ "$50-100M",
+    col >= 100 & col < 500 ~ "$100-500M",
+    col >= 500 ~ "$500M+"
+  )
+}
+
+allocation_subset <- allocation_subset %>%
+  mutate(invest_allocation_per_annum_from_21 = allocation_fn(invest_allocation_per_annum_from_21)) %>%
+  mutate(invest_allocation_per_annum_from_22 = allocation_fn(invest_allocation_per_annum_from_22)) %>%
+  mutate(invest_allocation_per_annum_from_23 = allocation_fn(invest_allocation_per_annum_from_23)) %>%
+  mutate(invest_allocation_per_annum_from_24 = allocation_fn(invest_allocation_per_annum_from_24)) 
+
+
+newbie_alloc <- alloc_func(allocation_subset, "Newbie", "invest_allocation_per_annum", "allocation")
+intermed_alloc <- alloc_func(allocation_subset, "Intermediate", 
+                             "invest_allocation_per_annum", "allocation")
+mature_alloc <- alloc_func(allocation_subset, "Mature", "invest_allocation_per_annum", "allocation")
+alloc_by_year <- rbind(newbie_alloc, intermed_alloc, mature_alloc)
+
+
+
+write.csv(alloc_by_year, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/allocation_year.csv")
+```
+
+
+# Independence From Parent
+
+```{r}
+independence_from_parent <- df_long %>%
+  select(mandate, year, independence_from_parent) %>%
+  mutate(independence_from_parent = case_when(
+    is.na(independence_from_parent) ~ NA,
+    independence_from_parent <= 3 ~ "Closely Aligned",
+    independence_from_parent > 3 & independence_from_parent < 7 ~ "Hybrid",
+    independence_from_parent >= 7 ~ "More Autonomous"
+  ))
+
+write.csv(independence_from_parent, 
+          "/Users/counterpartventures/Desktop/Data/Dashboard csvs/independence_from_parent.csv")
+```
+
+
+# Time spent managing LP
+
+```{r}
+managing_lp <- df_long %>%
+  select(mandate, year, time_spent_strat_lp_management) 
+
+write.csv(managing_lp, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/managing_parent.csv")
+```
+
+# Irr
+```{r}
+irr <- df_long %>% 
+  select(mandate, year, has_infrastruture_irr)
+
+write.csv(irr, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/irr.csv")
+```
+

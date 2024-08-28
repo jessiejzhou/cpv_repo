@@ -1,0 +1,61 @@
+---
+title: "Untitled"
+author: "hivebrite_affinity"
+date: "2024-07-24"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(readxl)
+```
+
+# industries
+
+```{r}
+affinity <- read_excel("/Users/counterpartventures/Desktop/Data/affinity/hivebrite.xlsx", sheet = "Affinity Export")
+hivebrite <- read_excel("/Users/counterpartventures/Desktop/Data/affinity/hivebrite.xlsx", sheet = "HB File to Match")
+```
+
+
+```{r}
+affinity_separated <- affinity %>%
+  separate_rows(`Email Addresses`, sep = "; ")
+```
+
+```{r}
+affinity_industries <- affinity_separated %>%
+  select(`Email Addresses`, `Industry of Corporation`, `Technologies the CVC fund invests in`)
+
+hivebrite_merge <- hivebrite[,-c(6:7)] %>%
+  left_join(affinity_industries, by = c("Primary Email" = "Email Addresses"))
+```
+
+```{r}
+write.xlsx(hivebrite_merge, "/Users/counterpartventures/Desktop/Data/affinity/hivebrite_merge.xlsx")
+```
+
+
+
+# Companies
+
+```{r}
+affinity2 <- read_excel("/Users/counterpartventures/Desktop/Data/affinity/companies.xlsx", sheet = "Affinity Export (2)")
+hivebrite2 <- read_excel("/Users/counterpartventures/Desktop/Data/affinity/companies.xlsx", sheet = "Company Hivebrite")
+```
+
+```{r}
+affinity_companies <- affinity2 %>%
+  select(`Current Fund`, `Industry of Corporation`) %>%
+  distinct
+
+
+hivebrite_industries <- hivebrite2[,-3] %>%
+  left_join(affinity_companies, by = c("Organization name" = "Current Fund"))
+
+dupes <- hivebrite_industries %>%
+  filter(duplicated(`Organization name`))
+write.xlsx(hivebrite_industries, "/Users/counterpartventures/Desktop/Data/affinity/hivebrite_companies.xlsx")
+```
+

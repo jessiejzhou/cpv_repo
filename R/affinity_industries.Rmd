@@ -1,0 +1,66 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = "/Users/counterpartventures/Desktop/Data/")
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(areaplot)
+library(readxl)
+library(stringr)
+library(openxlsx)
+library(jsonlite)
+```
+
+
+```{r}
+df <- read_excel("/Users/counterpartventures/Desktop/Data/affinity/company_upload.xlsx", sheet = "industry_only")
+industry_code <- read.csv("/Users/counterpartventures/Desktop/Data/affinity/industries.csv")
+
+names(df) <- c("company_id", "name")
+
+industries_code <- df %>%
+  separate_rows(name, sep = ", ") %>%
+  left_join(industry_code, by = "name")
+
+df <- df %>%
+  separate_rows(name, sep = ", ") %>%
+  left_join(industry_code, by = "name") %>%
+  na.omit() %>%
+  group_by(company_id) %>%
+  summarize(id = list(id), .groups = 'drop')
+```
+
+```{r}
+json_df <- toJSON(df, pretty = TRUE)
+write(json_df,"/Users/counterpartventures/Desktop/Data/affinity/industries_upload.json")
+```
+
+
+```{r}
+write.xlsx(df, "/Users/counterpartventures/Desktop/Data/affinity/industries.xlsx")
+```
+
+## Long decscription
+
+```{r}
+descrip <- read_excel("/Users/counterpartventures/Desktop/Data/affinity/company_upload.xlsx", sheet = "long_description")
+```
+
+
+```{r}
+descrip <- descrip %>%
+  select(ID, fund_size, strat_fin, industries_invested, avg_check_size, cvc_report_to) %>%
+  mutate(descrip = paste0("Size of Fund: ", fund_size, ", <br>",
+                         "Strategic<>Financial Scale: ", strat_fin, "<br>",
+                         "Investment Sectors: ", industries_invested, "<br>",
+                         "Average Check Size: ", avg_check_size, "<br>",
+                         "Venture Team Reports To: ", cvc_report_to))
+
+write.xlsx(descrip, "/Users/counterpartventures/Desktop/Data/affinity/descrip.xlsx")
+```
+

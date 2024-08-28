@@ -1,0 +1,28 @@
+---
+title: "stock_info"
+author: "Jessie Zhou"
+date: "2024-08-27"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(areaplot)
+library(readxl)
+library(tidyverse)
+library(openxlsx)
+library(jsonlite)
+```
+```{r}
+tickers <- read_excel("/Users/counterpartventures/Desktop/Data/Survey_Data_V4.1.xlsx", 
+                     sheet = "tickers")["ticker_symbol"]
+
+ticker_json <- toJSON(tickers, pretty = TRUE)
+
+write(ticker_json, file = "/Users/counterpartventures/Desktop/Data/tickers.json")
+```
+
+

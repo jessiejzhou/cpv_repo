@@ -1,0 +1,73 @@
+---
+title: "Correlation Analysis"
+output: pdf_document
+date: "2024-07-18"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(corrplot)
+```
+
+# Loading Dta
+```{r}
+df <- read_excel("/Users/counterpartventures/Desktop/Data/Survey Data 7.15.24 V3.20.xlsx", 
+                     sheet = "Master Data")
+```
+
+## Four Years Dat
+```{r, fig.height=10}
+numeric_cols_24 <- df %>%
+  select(where(is.numeric)) %>%
+  select(matches("_from_24"))
+names(numeric_cols_24) <- str_sub(names(numeric_cols_24), 1, -9)
+
+numeric_cols_24 <- numeric_cols_24 %>%
+  select(strategic_financial, invest_allocation_per_annum, avg_check_size,
+         investments_since_inception, investments_per_year, cvc_head_tenure,
+         investors_on_team_pct, people_on_team,
+         active_companies_portfolio, pct_allocated_core_business,
+         pct_allocated_new_domains, people_dedicated_strategic_valueadd) %>%
+  na.omit()
+
+numeric_cols_23 <- df %>%
+  select(where(is.numeric)) %>%
+  select(matches("_from_23"))
+names(numeric_cols_23) <- str_sub(names(numeric_cols_23), 1, -9)
+
+numeric_cols_23 <- numeric_cols_23 %>%
+  select(strategic_financial, invest_allocation_per_annum, avg_check_size,
+         investments_since_inception, investments_per_year, cvc_head_tenure,
+         investors_on_team_pct, people_on_team) %>%
+  na.omit()
+
+numeric_cols_22 <- df %>%
+  select(where(is.numeric)) %>%
+  select(matches("_from_22"))
+names(numeric_cols_22) <- str_sub(names(numeric_cols_22), 1, -9)
+
+numeric_cols_22 <- numeric_cols_22 %>%
+  select(strategic_financial, strategic_outcome_pct, avg_check_size,
+         investments_since_inception,investments_per_year, cvc_head_tenure,
+         investors_on_team_pct, people_on_team,
+         active_companies_portfolio) %>%
+  na.omit()
+
+numeric_cols_21 <- df %>%
+  select(where(is.numeric)) %>%
+  select(matches("_from_21"))
+names(numeric_cols_21) <- str_sub(names(numeric_cols_21), 1, -9)
+
+numeric_cols_21 <- numeric_cols_21 %>%
+  select(strategic_financial, avg_check_size,
+         investments_since_inception, investments_per_year, cvc_head_tenure,
+         people_on_team,
+         active_companies_portfolio) %>%
+  na.omit()
+
+corrplot(cor(numeric_cols_24))
+corrplot(cor(numeric_cols_23))
+corrplot(cor(numeric_cols_22))
+corrplot(cor(numeric_cols_21))
+```
+

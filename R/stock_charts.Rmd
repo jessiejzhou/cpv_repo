@@ -1,0 +1,50 @@
+---
+title: "Stock Data"
+output: pdf_document
+date: "2024-07-16"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+df <- read_excel("/Users/counterpartventures/Desktop/Data/Survey Data 7.15.24 V3.20.xlsx", 
+                     sheet = "Master Data")
+
+
+nvidia <- read.csv("/Users/counterpartventures/Desktop/Data/stock/NVDA.csv")
+microsoft <- read.csv("/Users/counterpartventures/Desktop/Data/stock/MSFT.csv")
+intel <- read.csv("/Users/counterpartventures/Desktop/Data/stock/INTC.csv")
+salesforce <- read.csv("/Users/counterpartventures/Desktop/Data/stock/CRM.csv")
+zoom <- read.csv("/Users/counterpartventures/Desktop/Data/stock/ZM.csv")
+```
+
+```{r}
+intel_stock <- intel %>%
+  filter(str_detect(Date, "01-01")) %>%
+  slice_tail(n = 4) %>%
+  mutate(Year = substr(Date, 1, 4)) %>%
+  select(Year, Open) 
+```
+
+```{r}
+intel <- df %>%
+  filter(cvc_name == "Intel Capital") %>%
+  select(fund_size_from_21, fund_size_from_22, fund_size_from_23, fund_size_from_24) %>%
+  mutate_all(as.numeric) %>%
+  pivot_longer(cols = starts_with("fund_size"), names_to = "Year", values_to = "fund_size") %>%
+  select(fund_size) %>%
+  cbind(Year = c(2021, 2022, 2023, 2024)) %>%
+  merge(intel_rows, by = "Year")
+```
+
+
+```{r}
+ggplot(intel, aes(x = Year)) + 
+  geom_bar(aes(y = sqrt(fund_size)), stat = "identity") +
+  geom_line(aes(y = Open))
+```
+

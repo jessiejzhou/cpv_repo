@@ -1,0 +1,102 @@
+---
+title: "test"
+output: pdf_document
+date: "2024-06-25"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(readxl)
+```
+
+```{r}
+data21 <- read_excel("/Users/counterpartventures/Desktop/Data/Survey_Data_V3.22.xlsx", sheet = "data21")
+data22 <- read_excel("/Users/counterpartventures/Desktop/Data/Survey_Data_V3.22.xlsx", sheet = "data22")
+data23 <- read_excel("/Users/counterpartventures/Desktop/Data/Survey_Data_V3.22.xlsx", sheet = "data23")
+data24 <- read_excel("/Users/counterpartventures/Desktop/Data/Survey_Data_V3.22.xlsx", sheet = "data24")
+```
+
+
+
+
+standardizing rows
+```{r}
+unique_companies <- sort(unique(c(data21$cvc_name, data22$cvc_name, 
+                                  data23$cvc_name, data24$cvc_name)))
+all_companies <- data.frame(cvc_name = unique_companies)
+data21 <- merge(all_companies, data21, by.x = "cvc_name", by.y = "cvc_name", all.x = TRUE)
+data22 <- merge(all_companies, data22, by.x = "cvc_name", by.y = "cvc_name", all.x = TRUE)
+data23 <- merge(all_companies, data23, by.x = "cvc_name", by.y = "cvc_name", all.x = TRUE)
+data24 <- merge(all_companies, data24, by.x = "cvc_name", by.y = "cvc_name", all.x = TRUE)
+```
+
+
+
+```{r}
+names(data24) <- paste0(names(data24), "_from_24")
+names(data23) <- paste0(names(data23), "_from_23")
+names(data22) <- paste0(names(data22), "_from_22")
+names(data21) <- paste0(names(data21), "_from_21")
+
+```
+
+```{r}
+insert_matching_columns <- function(main_df, secondary_df) {
+  
+  main_df_q <- data.frame(og = names(main_df), clean = sub("_from_[0-9]+$", "", names(main_df)))
+  second_df_q <- data.frame(og = names(secondary_df), clean = sub("_from_[0-9]+$", "", names(secondary_df)))
+  common_cols <- intersect(main_df_q$clean, second_df_q$clean)
+  
+    for (col in common_cols) {
+      
+      q_index <- which(second_df_q$clean == col)
+      matching_col <- secondary_df[second_df_q$og[q_index]]
+      col_position <- which(main_df_q$clean == col)[1] # Find position of current column in main_df
+      
+      if (col_position < ncol(main_df)) {
+        main_df <- cbind(main_df[, 1:col_position], 
+                         matching_col,
+                         main_df[, (col_position + 1):ncol(main_df)])
+      } else {
+        main_df <- cbind(main_df[, 1:col_position], matching_col) 
+      }
+      
+      main_df_q <- data.frame(og = names(main_df), clean = sub("_from_[0-9]+$", "", names(main_df)))
+      second_df_q <- data.frame(og = names(secondary_df), clean = sub("_from_[0-9]+$", "", names(secondary_df)))
+      
+    }
+  
+  secondary_only_cols <- setdiff(second_df_q[,2], main_df_q[,2])
+  
+  for (col in secondary_only_cols){
+    q_index <- which(second_df_q[,2] == col)
+    matching_col <- secondary_df[second_df_q[q_index,1]]
+    main_df <- cbind(main_df, matching_col)
+  }
+  return(main_df)
+}
+
+main_df <- insert_matching_columns(data21, data24)
+```
+
+
+```{r}
+main_df <- insert_matching_columns(main_df, data23)
+main_df <- insert_matching_columns(main_df, data22)
+names_main <- data.frame(names(main_df))
+```
+
+
+Omitting Personal Info (name, email)
+```{r}
+main_df <- cbind(all_companies, main_df[,-c(1:22)])
+```
+
+```{r}
+library(openxlsx)
+write.csv(main_df, "/Users/counterpartventures/Desktop/Data/master.csv", row.names = F)
+write.xlsx(main_df, "/Users/counterpartventures/Desktop/Data/master.xlsx", rowNames = F)
+```
+
+

@@ -1,0 +1,211 @@
+---
+title: "affinity"
+output: pdf_document
+date: "2024-07-12"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readxl)
+library(dplyr)
+library(stringr)
+library(tidyr)
+
+```
+
+# Importing Data
+```{r}
+industries <- read_excel("/Users/counterpartventures/Desktop/Data/affinity/affinity_data.xlsx")
+```
+
+
+```{r}
+investments_filled <- industries %>%
+  group_by(fund) %>%
+  mutate(tech_invested = ifelse(!is.na(tech_invested), 
+                                   tech_invested, first(na.omit(tech_invested)))) %>%
+  select(fund, sector_focus, tech_invested) 
+
+tech_filled <- investments_filled %>%
+  select(fund, tech_invested) %>%
+  filter(!is.na(tech_invested)) %>%
+  group_by(fund) %>%
+  slice(1) %>%
+  ungroup()
+
+tech_unfilled <- investments_filled %>%
+  select(fund, sector_focus, tech_invested) %>%
+  filter(is.na(tech_invested)) %>%
+  group_by(fund) %>%
+  filter(!(n() > 1 & is.na(sector_focus))) %>%
+  ungroup()
+```
+
+
+
+## pull in responses from 2023
+```{r}
+separated_sector <- tech_unfilled %>%
+  separate_rows(sector_focus, sep = "; ") %>%
+  mutate(tech_invested = case_when(
+    str_detect(sector_focus, regex("3d", ignore_case = TRUE)) ~ "3D Printing",
+    str_detect(sector_focus, regex("adtech|ad tech", ignore_case = TRUE)) ~ "Ad Tech",
+    str_detect(sector_focus, regex("(?=.*adv)(?=.*manufacturing)", ignore_case = F)) ~ "Advanced Manufacturing",
+    str_detect(sector_focus, regex("(?=.*ag)(?=.*tech)|Agri Tech", ignore_case = TRUE)) ~ "AgTech",
+    str_detect(sector_focus, "\\bAI\\b|\\bML\\b|Machine Learning|Artificial Intelligence|Computer Vision|spatial intelligence|GenAI") ~ "Artificial Intelligence & Machine Learning",
+    str_detect(sector_focus, regex("audio|music|sound", ignore_case = TRUE)) ~ "Audio Tech",
+    str_detect(sector_focus, "AR") ~ "Augmented Reality",
+    str_detect(sector_focus, regex("\\bautonomous(?:\\s+driving|\\s+vehicles)\\b|Autonomic Vehicles", ignore_case = TRUE)) ~ "Autonomous Cars",
+    str_detect(sector_focus, "B2B Payments") ~ "	B2B Payments",
+    str_detect(sector_focus, "Beauty") ~ "Beauty",
+    str_detect(sector_focus, regex("data|analytics", ignore_case = TRUE)) ~ "Data Tech",
+    str_detect(sector_focus, regex("cannabis", ignore_case = TRUE)) ~ "Cannabis",
+    str_detect(sector_focus, regex("Clean|Wastestream", ignore_case = TRUE)) ~ "CleanTech",
+    str_detect(sector_focus, regex("Climate Tech|Climatech|Climatetech|decarbonizatio|carbon|emissions|new energies", ignore_case = TRUE)) ~ "Climate Tech",
+    str_detect(sector_focus, regex("cloud|dev ops|devops", ignore_case = TRUE)) ~ "CloudTech & DevOps",
+    str_detect(sector_focus, regex("construction|contech", ignore_case = TRUE)) ~ "Construction Tech",
+    str_detect(sector_focus, regex("crypto|blockchain|NFT", ignore_case = TRUE)) ~ "Cryptocurrency & Blockchain",
+    str_detect(sector_focus, regex("cybersecurity|cyber security|Cybsersecurity", ignore_case = TRUE)) ~ "Cybersecurity",
+    str_detect(sector_focus, "Digital Health") ~ "Digital Health",
+    str_detect(sector_focus, regex("e-commerce|ecommerce", ignore_case = TRUE)) ~ "E-Commerce",
+    str_detect(sector_focus, regex("edtech|education", ignore_case = TRUE)) ~ "Ed Tech",
+    str_detect(sector_focus, regex("femtech", ignore_case = TRUE)) ~ "Fem Tech",
+    str_detect(sector_focus, regex("Financial|Fintech", ignore_case = TRUE)) ~ "FinTech",
+    str_detect(sector_focus,regex("ingredient|\\bfood\\b.*\\btech\\b|\\btech\\b.*\\bfood\\b|Foodtech", ignore_case = TRUE)) ~ "Food Tech",
+    str_detect(sector_focus, "gaming") ~ "Gaming",
+    str_detect(sector_focus, regex("hr tech", ignore_case = TRUE)) ~ "HR Tech",
+    str_detect(sector_focus, regex("\\bhealth\\b.*\\btech\\b|\\bhealth\\b.*\\bfood\\b|health tech|healthtech|E-health|Digital health|digital healthcare|medtech", 
+                                   ignore_case = TRUE)) ~ "Health Tech",
+    str_detect(sector_focus, regex("industrial|4.0", ignore_case = TRUE)) ~ "Industrials",
+    str_detect(sector_focus, regex("infrastructure", ignore_case = TRUE)) ~ "Infrastructure",
+    str_detect(sector_focus, regex("insurtech|InsureTech|Insure Tech", ignore_case = TRUE)) ~ "InsurTech",
+    str_detect(sector_focus, regex("IoT", ignore_case = F)) ~ "Internet of Things",
+    str_detect(sector_focus, regex("Green|sustainability|sustainable|wellness|healthy|fitness|nutrition", 
+                                   ignore_case = TRUE)) ~ "LOHAS & Wellness",
+    str_detect(sector_focus, regex("Manufacturing|Fabrication", ignore_case = TRUE)) ~ "Manufacturing",
+    str_detect(sector_focus, regex("marketing", ignore_case = TRUE)) ~ "Marketing Tech",
+    str_detect(sector_focus, regex("mobility", ignore_case = TRUE)) ~ "Mobility",
+    str_detect(sector_focus, "VR") ~ "Virtual Reality",
+    str_detect(sector_focus, regex("Enterprise|Entreprise", ignore_case = TRUE)) ~ "Enterprise Tech",
+    str_detect(sector_focus, regex("SaaS", ignore_case = TRUE)) ~ "SaaS",
+    str_detect(sector_focus, regex("legal", ignore_case = TRUE)) ~ "Legal Tech",
+    str_detect(sector_focus, regex("restaurant tech", ignore_case = TRUE)) ~ "Restaurant Tech",
+    str_detect(sector_focus, regex("telecommunications|Telecommnucations|media|Entertainment", 
+                                   ignore_case = TRUE)) ~ "TMT",
+    str_detect(sector_focus, regex("aerospace|defense", 
+                                   ignore_case = TRUE)) ~ "Aerospace & Defense",
+    str_detect(sector_focus, regex("energy", ignore_case = TRUE)) ~ "Energy",
+    str_detect(sector_focus, regex("esg", ignore_case = TRUE)) ~ "ESG",
+    str_detect(sector_focus, regex("transport", ignore_case = TRUE)) ~ "Transportation",
+    
+    str_detect(sector_focus, regex("web3", ignore_case = TRUE)) ~ "Web3",
+    
+    str_detect(sector_focus, regex("IT|Information Technology", ignore_case = F)) ~ "IT Services",
+    str_detect(sector_focus, regex("(?=.*adv)(?=.*material)", ignore_case = TRUE)) ~ "Advanced Materials",
+    str_detect(sector_focus, regex("batteries|battery", ignore_case = TRUE)) ~ "Batteries",
+    str_detect(sector_focus, regex("bio", ignore_case = TRUE)) ~ "BioTech",
+    str_detect(sector_focus, regex("Consumer|CPG", ignore_case = TRUE)) ~ "Consumer Products & Services",
+    str_detect(sector_focus, regex("customer|crm|hospitality", ignore_case = TRUE)) ~ "Customer Experience",
+    str_detect(sector_focus, regex("(?=.*deep)(?=.*tech)", ignore_case = TRUE)) ~ "Deep Tech",
+    str_detect(sector_focus, regex("Digital", ignore_case = TRUE)) ~ "Digital Services",
+    str_detect(sector_focus, regex("Food|Beverage|(?=.*bev)(?=.*alc)", ignore_case = TRUE)) ~ "Food and Beverage",
+    str_detect(sector_focus, regex("wellness|wellbeing|Healthy", 
+                                   ignore_case = TRUE)) ~ "Health & Wellness",
+    str_detect(sector_focus, regex("logistics", ignore_case = TRUE)) ~ "Logistics",
+    str_detect(sector_focus, regex("supply chain", ignore_case = TRUE)) ~ "Supply Chain",
+    str_detect(sector_focus, regex("(?=.*prop)(?=.*tech)", ignore_case = TRUE)) ~ "Prop Tech",
+    str_detect(sector_focus, regex("(?=.*hard)(?=.*tech)", ignore_case = TRUE)) ~ "Hard Tech",
+    str_detect(sector_focus, regex("retail", ignore_case = TRUE)) ~ "Retail & Retail Tech",
+    str_detect(sector_focus, regex("risk", ignore_case = TRUE)) ~ "Risk Management",
+    str_detect(sector_focus, regex("sports", ignore_case = TRUE)) ~ "Sports & Sports Tech",
+    str_detect(sector_focus, regex("health|(?=.*health)(?=.*care)", ignore_case = TRUE)) ~ "Healthcare",
+    str_detect(sector_focus, regex("(?=.*frontier)(?=.*tech)", ignore_case = TRUE)) ~ "Frontier Tech",
+    str_detect(sector_focus, regex("materials", ignore_case = TRUE)) ~ "Materials",
+    str_detect(sector_focus, regex("hardware", ignore_case = TRUE)) ~ "Hardware",
+    str_detect(sector_focus, regex("semiconductor", ignore_case = TRUE)) ~ "Semiconductors",
+    str_detect(sector_focus, regex("water", ignore_case = TRUE)) ~ "Water",
+    str_detect(sector_focus, regex("climate", ignore_case = TRUE)) ~ "Climate",
+    str_detect(sector_focus, regex("storage|containers", ignore_case = TRUE)) ~ "Storage",
+    str_detect(sector_focus, regex("Quantum", ignore_case = TRUE)) ~ "Quantum Tech",
+    str_detect(sector_focus, regex("space", ignore_case = TRUE)) ~ "Space",
+    str_detect(sector_focus, regex("software|sw", ignore_case = TRUE)) ~ "Software",
+    str_detect(sector_focus, regex("construction", ignore_case = TRUE)) ~ "Construction Tech",
+    str_detect(sector_focus, regex("communication", ignore_case = TRUE)) ~ "Communications",
+    str_detect(sector_focus, regex("commerce|payment", ignore_case = TRUE)) ~ "Commerce & Payments",
+    str_detect(sector_focus, regex("robotics|drone", ignore_case = TRUE)) ~ "Robotics & Drones",
+    str_detect(sector_focus, regex("travel", ignore_case = TRUE)) ~ "Travel & Travel Tech",
+    str_detect(sector_focus, regex("automation", ignore_case = TRUE)) ~ "Automation",
+    str_detect(sector_focus, regex("automotive|transport", ignore_case = TRUE)) ~ "Automotive & Transport"
+  )
+  )
+  
+```
+
+
+## collapsing
+```{r}
+tech_invested_cvc <- separated_sector %>%
+  group_by(fund) %>%
+  distinct(tech_invested, .keep_all = TRUE) %>%
+  summarize(tech_invested = paste(tech_invested, collapse = ";")) %>%
+  rbind(tech_filled)
+
+tech_invested_names <- industries %>%
+  select(name, primary_email, fund) %>%
+  merge(tech_invested_cvc, by = "fund")
+```
+
+
+```{r}
+write_xlsx(tech_invested_names, "/Users/counterpartventures/Desktop/Data/affinity/tech_invested.xlsx")
+
+write.csv(tech_invested_names, "/Users/counterpartventures/Desktop/Data/affinity/tech_invested.csv")
+```
+
+# industry from survey
+
+```{r}
+df <- read_excel("/Users/counterpartventures/Desktop/Data/Survey Data 7.15.24 V3.20.xlsx",sheet = "Master Data")
+
+patterns_replacements <- c(
+  "Food & Beverage$" = "Food & Beverage & CPG", 
+  "/" = " & ",
+  "Industrials, Agriculture, Manufacturing, Chemicals|Industrials, Manufacturing, Chemicals" = 
+    "Industrials & Agriculture & Manufacturing & Chemicals",
+  ", " = " & "
+)
+
+
+survey_industries <- df %>%
+  select(fund = cvc_name, corp_industry_from_22, corp_industry_from_23, corp_industry_from_24) %>%
+  pivot_longer(cols = starts_with("corp_industry_from"), values_to = "corp_industry") %>% 
+  mutate(corp_industry = str_replace_all(corp_industry, patterns_replacements)) %>%
+  select(fund, corp_industry)
+```
+
+
+## filling in industries
+```{r}
+industry_filled <- industries %>%
+  select(fund, corp_industry) %>%
+  rbind(survey_industries) %>%
+  separate_rows(corp_industry, sep = "; ") %>%
+  separate_rows(corp_industry, sep = "\r\n") %>%
+  group_by(fund) %>%
+  summarise(unique_industries = paste(unique(corp_industry), collapse = ";")) %>%
+  mutate(corp_industry = gsub("NA;|;NA", "", unique_industries)) %>%
+  mutate(corp_industry = na_if(corp_industry, "NA")) %>%
+  select(fund, corp_industry) 
+
+  
+final_filled <-  tech_invested_names %>%
+  merge(industry_filled, by = "fund") 
+```
+
+
+```{r}
+write_xlsx(final_filled, "/Users/counterpartventures/Desktop/Data/affinity/final_filled.xlsx")
+
+write.csv(final_filled, "/Users/counterpartventures/Desktop/Data/affinity/final_filled.csv")
+```
+

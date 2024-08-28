@@ -1,0 +1,82 @@
+---
+title: "plots"
+output: html_document
+date: "2024-07-17"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(readxl)
+library(tidyr)
+library(stringr)
+```
+
+# load data
+```{r}
+df <- read_excel("/Users/counterpartventures/Desktop/Data/Survey Data 7.15.24 V3.20.xlsx", 
+                     sheet = "Master Data")
+
+calculate_percentage <- function(df, column) {
+  df %>%
+    filter(!is.na(!!sym(column))) %>%
+    count(!!sym(column)) %>%
+    mutate(percentage = n / sum(n)) %>%
+    dplyr::select(!!sym(column), percentage)
+}
+```
+
+
+```{r}
+industries <- df %>%
+  select(corp_industry_from_24, verts_invested_from_24) %>%
+  mutate(corp_industry_from_24 = str_replace_all(corp_industry_from_24, ", ", " & ")) %>%
+  separate_rows(corp_industry_from_24, sep = ", ") %>%
+  separate_rows(corp_industry_from_24, sep = "\r\n") %>%
+  separate_rows(verts_invested_from_24, sep = "\r\n") %>%
+  na.omit()
+
+corp_top_10 <- industries %>%
+  count(corp_industry_from_24) %>%
+  arrange(desc(n)) %>%
+  slice(1:10) %>%
+  pull(corp_industry_from_24)
+
+vert_top_10 <- industries %>%
+  count(verts_invested_from_24) %>%
+  arrange(desc(n)) %>%
+  slice(1:10) %>%
+  pull(verts_invested_from_24)
+
+industries <- industries %>%
+  mutate(verts_invested_from_24 = ifelse(verts_invested_from_24 %in% vert_top_10,
+                                         verts_invested_from_24, "Other"))
+
+vert_invested_ct <- industries %>%
+  filter(corp_industry_from_24 %in% corp_top_10) %>%
+  group_by(verts_invested_from_24) %>%
+  mutate(count = 1) %>%
+  pivot_wider(names_from = corp_industry_from_24, values_from = count, values_fn = list)
+
+df_summed <- as.data.frame(lapply(vert_invested_ct[,2:ncol(vert_invested_ct)], 
+                                  function(column){sapply(column, sum)})) 
+
+df_pct <- apply(df_summed, 1, function(row) {
+  row / sum(row) * 100
+}) %>%
+  t()
+
+verts <- c("Advanced Manufacturing", "Other", "CleanTech", "ClimateTech",
+           "Manufacturing", "Robotics & Drones", "FinTech", "SaaS", "AI & ML",
+           "Cybersecurity", "Supply Chain Tech")
+df_pct <- cbind(verts_invested = unique(industries$verts_invested_from_24), df_pct)
+df_ct <- cbind(verts_invested = verts, df_summed)
+
+```
+
+```{r}
+write.csv(df_pct, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/vert_invested.csv")
+write.csv(df_ct, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/vert_invested_ct.csv")
+```
+

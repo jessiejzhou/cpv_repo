@@ -1,0 +1,58 @@
+---
+title: "tableau_7.10_plots"
+output: pdf_document
+date: "2024-07-22"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Reading dfs
+```{r}
+df <- read_excel("/Users/counterpartventures/Desktop/Data/Survey_Data_V3.21.xlsx", 
+                     sheet = "Master Data")
+```
+
+
+# Function to get long df
+```{r}
+to_long <- function(df, var_name){
+  pivoted <- df %>%
+    select(public_private, survey_count, starts_with(var_name)) %>%
+    pivot_longer(cols = starts_with(var_name), names_to = "year", values_to = "aum") %>%
+    mutate(year = as.numeric(substr(year, nchar(year)-1, nchar(year))))
+}
+```
+
+# Pivoting
+```{r}
+#Fund Size
+aum <- to_long(df, "fund_size")
+
+# Investment Allocation
+invest_allocation <- to_long(df, "invest_allocation_per_annum")
+
+# Sweet Spot
+sweet_spot <- to_long(df, "sweet_spot")
+
+# Exits
+exits <- to_long(df, "exits_past12") 
+
+# Check Size
+check_size <- to_long(df, "avg_check_size")
+```
+
+# Writing to CSVs
+```{r}
+write.csv(aum, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/fund_size_long.csv")
+write.csv(invest_allocation, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/invest_allocation_long.csv")
+write.csv(sweet_spot, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/sweet_spot_long.csv")
+write.csv(exits, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/exits_long.csv")
+write.csv(check_size, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/check_size_long.csv")
+```
+
+
+
+
+
