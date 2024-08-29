@@ -20,7 +20,7 @@ library(readxl)
 
 # Loading df
 ```{r}
-df <- read_excel("/Users/counterpartventures/Desktop/Data/Survey_Data_V4.0.xlsx", 
+df <- read_excel("/Users/counterpartventures/Desktop/Data/Survey_Data_V5.xlsx", 
                      sheet = "Master Data")
 
 df_long <- read_excel("/Users/counterpartventures/Desktop/Data/survey_long.xlsx")
@@ -461,13 +461,22 @@ parent_long <- merge_parent %>%
 write.csv(parent_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/parent.csv")
 ```
 
-## By Fund Type 
 
+## By year founded
 ```{r}
 parent_fn <- function(col){
   ifelse(col %in% c("40-60%", "> 60%"),"> 40%", "< 40%")
 }
 
+parent_long <- df_long %>%
+  select(fund_category, year, time_spent_strat_lp_management) %>%
+  mutate(time_spent_strat_lp_management = parent_fn(time_spent_strat_lp_management))
+write.csv(parent_long, "/Users/counterpartventures/Desktop/Data/Dashboard csvs/parent_long.csv")
+```
+
+## By Fund Type 
+
+```{r}
 parent <- df %>%
   select(mandate_from_21, mandate_from_22, mandate_from_23, mandate_from_24,
          time_spent_strat_lp_management_from_21, time_spent_strat_lp_management_from_22,

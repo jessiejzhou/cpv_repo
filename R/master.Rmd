@@ -8,13 +8,16 @@ date: "2024-06-25"
 knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
 library(readxl)
+library(openxlsx)
 ```
 
 ```{r}
-data21 <- read_excel("/Users/counterpartventures/Desktop/Data/Survey_Data_V3.22.xlsx", sheet = "data21")
-data22 <- read_excel("/Users/counterpartventures/Desktop/Data/Survey_Data_V3.22.xlsx", sheet = "data22")
-data23 <- read_excel("/Users/counterpartventures/Desktop/Data/Survey_Data_V3.22.xlsx", sheet = "data23")
-data24 <- read_excel("/Users/counterpartventures/Desktop/Data/Survey_Data_V3.22.xlsx", sheet = "data24")
+file_path = "/Users/counterpartventures/Desktop/Data/Survey_Data_V5.xlsx"
+wb <- loadWorkbook(file_path)
+data21 <- read_excel(file_path, sheet = "data21")
+data22 <- read_excel(file_path, sheet = "data22")
+data23 <- read_excel(file_path, sheet = "data23")
+data24 <- read_excel(file_path, sheet = "data24")
 ```
 
 
@@ -90,13 +93,19 @@ names_main <- data.frame(names(main_df))
 
 Omitting Personal Info (name, email)
 ```{r}
-main_df <- cbind(all_companies, main_df[,-c(1:22)])
+main_df <- main_df[,-c(1:22)]
 ```
 
 ```{r}
-library(openxlsx)
-write.csv(main_df, "/Users/counterpartventures/Desktop/Data/master.csv", row.names = F)
-write.xlsx(main_df, "/Users/counterpartventures/Desktop/Data/master.xlsx", rowNames = F)
+sheet_name <- "Master Data"
+
+if (sheet_name %in% names(wb)) {
+  writeData(wb, sheet = sheet_name, main_df, startCol = 13, startRow = 1)
+} else {
+  addWorksheet(wb, sheet_name)
+  writeData(wb, sheet = sheet_name, main_df, startCol = 13, startRow = 1)
+}
+saveWorkbook(wb, file_path, overwrite = TRUE)
 ```
 
 

@@ -18,8 +18,10 @@ library(openxlsx)
 
 # reading df
 ```{r}
-df <- read_excel("/Users/counterpartventures/Desktop/Data/Survey_Data_V5.xlsx", 
-                     sheet = "Master Data")
+file_name <- "/Users/counterpartventures/Desktop/Data/Survey_Data_V5.xlsx"
+df <- read_excel(file_name, sheet = "Master Data")
+
+head(df)
 ```
 
 # pivoting longer
@@ -27,7 +29,7 @@ df <- read_excel("/Users/counterpartventures/Desktop/Data/Survey_Data_V5.xlsx",
 df_long <- df %>%
   mutate(across(-cvc_name, as.character)) %>%
   pivot_longer(
-    cols = -colnames(df)[1:12],
+    cols = -colnames(df)[1:13],
     names_to = c("question", "year"),
     names_pattern = "(.*)_from_(\\d{2})"
   ) %>%
@@ -50,7 +52,8 @@ for (col_name in names(df_wide)) {
 ```
 
 ```{r}
-write.xlsx(df_wide, "/Users/counterpartventures/Desktop/Data/survey_long.xlsx")
+destination_file = "/Users/counterpartventures/Desktop/Data"
+write.xlsx(df_wide, paste0(destination_file, "/survey_long.xlsx"))
 ```
 
 
