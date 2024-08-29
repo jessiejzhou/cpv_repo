@@ -23,16 +23,20 @@ After writing the functions, we loop through all of the ticker symbols and apply
 
 With the new dataframe `result`, we use another [API](https://www.exchangerate-api.com/) to convert non-USD values into USD. It's free to sign up, and once your account is created it will generate an API key for you to use. Replace `api_key` with the one created for your account. We then convert the currency, select the columns we want, and upload this new sheet to our original file.
 
-Then at the end, I pivot the `Master Data` to long format. ⚠️ **NOTE!! Please update `destination_path` variable to the desired folder where you want `survey_long` to be stored, just as you updated `file_path`** ⚠️
+Then at the end, I pivot the `Master Data` to long format.
 
 ### Using this code
 Running this is super simple; there are only a few changes required for your use. 
 
-First, if the original excel file name is modified or if the file path is changed (i.e. moved into different folders on your computer), **`file_path` needs to be updated accordingly**. You can easily get the path by right clicking on your file in jupyterlab and selecting "Copy Path."
+First and most importantly, ⚠**if the original excel file name is modified or if the file path is changed (i.e. moved into different folders on your computer), `file_path` needs to be updated accordingly**.⚠ You can easily get the path by right clicking on your file in jupyterlab and selecting "Copy Path." 
 
 ![pixil-frame-0](https://github.com/user-attachments/assets/d656da05-c5c1-4a8f-b481-e8ec60380204)
 
-The other change to be made is the API key for ExchangeRate-API that I mentioned previously. This is optional but **highly reccomended**. 
+
+⚠**Please update the `destination_path` variable _at the very end_ to the desired folder where you want `survey_long` to be stored in the same way**⚠
+
+The second change to be made is the API key for ExchangeRate-API that I mentioned previously. This is optional but **highly reccomended**. 
+
 If the file path is set up correctly, all the work required is to click the run button at the top, the one that resembles a fast forward button:
 
 ![pixil-frame-0 (2)](https://github.com/user-attachments/assets/d4b45233-a1f9-40de-914b-234d5224f0cd)
