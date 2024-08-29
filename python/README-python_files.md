@@ -28,12 +28,12 @@ Then at the end, I pivot the `Master Data` to long format.
 ### Using this code
 Running this is super simple; there are only a few changes required for your use. 
 
-First and most importantly, ⚠**if the original excel file name is modified or if the file path is changed (i.e. moved into different folders on your computer), `file_path` needs to be updated accordingly**.⚠ You can easily get the path by right clicking on your file in jupyterlab and selecting "Copy Path." 
+First and most importantly, ⚠️ **if the original excel file name is modified or if the file path is changed (i.e. moved into different folders on your computer), `file_path` needs to be updated accordingly**. ⚠️ You can easily get the path by right clicking on your file in jupyterlab and selecting "Copy Path." 
 
 ![pixil-frame-0](https://github.com/user-attachments/assets/d656da05-c5c1-4a8f-b481-e8ec60380204)
 
 
-⚠**Please update the `destination_path` variable _at the very end_ to the desired folder where you want `survey_long` to be stored in the same way**⚠
+⚠️ **Please update the `destination_path` variable _at the very end_ to the desired folder where you want `survey_long` to be stored in the same way** ⚠️
 
 The second change to be made is the API key for ExchangeRate-API that I mentioned previously. This is optional but **highly reccomended**. 
 
