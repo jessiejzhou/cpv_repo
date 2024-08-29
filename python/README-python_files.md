@@ -34,7 +34,7 @@ First and most importantly, ⚠️ **if the original excel file name is modified
 
 
 
-⚠️ **Please update the `destination_path` variable as well. It is _at the very end_ (second to last line of code in the whole file) to the desired folder where you want `survey_long` to be stored in the same way** ⚠️
+⚠️ **Please update the `destination_path` variable as well in the same way. It is _at the very end_ (second to last line of code in the whole file). Change it to the desired folder where you want `survey_long` to be stored.** ⚠️
 
 The second change to be made is the API key for ExchangeRate-API that I mentioned previously. This is optional but **highly reccomended**. 
 
