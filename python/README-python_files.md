@@ -33,7 +33,8 @@ First and most importantly, ⚠️ **if the original excel file name is modified
 ![pixil-frame-0](https://github.com/user-attachments/assets/d656da05-c5c1-4a8f-b481-e8ec60380204)
 
 
-⚠️ **Please update the `destination_path` variable _at the very end_ to the desired folder where you want `survey_long` to be stored in the same way** ⚠️
+
+⚠️ **Please update the `destination_path` variable _at the very end_ (second to last line of code in the whole file) to the desired folder where you want `survey_long` to be stored in the same way** ⚠️
 
 The second change to be made is the API key for ExchangeRate-API that I mentioned previously. This is optional but **highly reccomended**. 
 
