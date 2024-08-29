@@ -23,7 +23,7 @@ After writing the functions, we loop through all of the ticker symbols and apply
 
 With the new dataframe `result`, we use another [API](https://www.exchangerate-api.com/) to convert non-USD values into USD. It's free to sign up, and once your account is created it will generate an API key for you to use. Replace `api_key` with the one created for your account. We then convert the currency, select the columns we want, and upload this new sheet to our original file.
 
-Then at the end, I pivot the `Master Data` to long format. **NOTE!! Please update `destination_path` variable to the desired folder where you want `survey_long` to be stored, just as you updated `file_path`**
+Then at the end, I pivot the `Master Data` to long format. ⚠️ **NOTE!! Please update `destination_path` variable to the desired folder where you want `survey_long` to be stored, just as you updated `file_path`** ⚠️
 
 ### Using this code
 Running this is super simple; there are only a few changes required for your use. First, if the original excel file name is modified or if the file path is changed (i.e. moved into different folders on your computer), `file_path` needs to be updated accordingly. You can easily get the path by right clicking on your file in jupyterlab and selecting "Copy Path."
