@@ -1,6 +1,6 @@
 # To run the scripts:
 
-Download R and RStudio [here](https://posit.co/download/rstudio-desktop/). Then you should be able to open and edit files.
+Install R and RStudio [here](https://posit.co/download/rstudio-desktop/). Then you should be able to open and edit files.
 
 # Master
 
