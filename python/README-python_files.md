@@ -25,7 +25,7 @@ With the new dataframe `result`, we use another [API](https://www.exchangerate-a
 
 Then at the end, I pivot the `Master Data` to long format.
 
-### Using this code
+## Using this code
 Running this is super simple; there are only a few changes required for your use. 
 
 First and most importantly, ⚠️ **if the original excel file name is modified or if the file path is changed (i.e. moved into different folders on your computer), `file_path` needs to be updated accordingly**. ⚠️ You can easily get the path by right clicking on your file in jupyterlab and selecting "Copy Path." 
@@ -36,13 +36,17 @@ First and most importantly, ⚠️ **if the original excel file name is modified
 
 ⚠️ **Please update the `destination_path` variable as well in the same way. It is _at the very end_ (second to last line of code in the whole file). Change it to the desired folder where you want `survey_long` to be stored.** ⚠️
 
+**‼️There is a difference between FILE path and FOLDER path,‼️ for example, file_path would be something like:<br><br>_"/Users/counterpartventures/Desktop/Data/Survey_Data_V5.xlsx"_ <br><br>whereas folder path is:<br><br>_"/Users/counterpartventures/Desktop/Data"_**
+
+You will have to choose which path to use according to my instructions below.
+
 The second change to be made is the API key for ExchangeRate-API that I mentioned previously. This is optional but **highly reccomended**. 
 
 If the file path is set up correctly, all the work required is to click the run button at the top, the one that resembles a fast forward button:
 
 ![pixil-frame-0 (2)](https://github.com/user-attachments/assets/d4b45233-a1f9-40de-914b-234d5224f0cd)
 
-Once you've done this, the sheet should be uploaded into the original file!
+Once you've done this, the sheet should be uploaded into the original file! **Note:** you will have to run the pivot_df.Rmd file in R to get survey_long.
 
 
 # Company Upload
