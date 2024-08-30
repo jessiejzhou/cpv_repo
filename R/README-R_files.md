@@ -6,6 +6,12 @@ There are three main files you will need: master.Rmd, pivot_df.Rmd, and multiple
 - pivot_df: reshapes the master data into long format, we need this for Tableau
 - multiple_answers: pulls questions with multiple answers and breaks them down line by line. For the relational database.
 
+# File Paths:
+
+You will need to update file_path and destinations to where the data is stored on your local machine. **There is a difference between FILE path and FOLDER path, for example, file_path would be something like:<br><br>_"/Users/counterpartventures/Desktop/Data/Survey_Data_V5.xlsx"_ <br><br>whereas folder path is:<br><br>_"/Users/counterpartventures/Desktop/Data"_**
+
+You will have to choose which path to use according to my instructions below.
+
 
 # To run the scripts:
 
@@ -19,16 +25,14 @@ Click "Run All" or Option + Command + R to run the script.
 
 This is the most important file. If there are any changes to the yearly survey data, then run this script and you will get updates in "Master Data."
 
-⚠️ **Please edit `file_path` to the file path of Survey_Data on your local machine.** ⚠️
+⚠️ **Please edit `file_path` to the _FILE_ path of Survey_Data on your local machine.** ⚠️
 
 
 # pivot_df
 
 This is the file to pivot the original "Master Data" into long format. Run it to get a long version of your data. 
 
-⚠️ **please edit `file_path` to the file path of Survey_Data on your local machine.**
-
-**Also edit `destination_path` to the folder path, ‼️ NOT FILE path‼️, where you want `survey_long` to be stored. For example, file_path would be something like:<br><br>_"/Users/counterpartventures/Desktop/Data/Survey_Data_V5.xlsx"_ <br><br>whereas folder path is:<br><br>_"/Users/counterpartventures/Desktop/Data"_** ⚠️
+⚠️ **please edit `file_path` to the file path of Survey_Data on your local machine. Also edit `destination_path` to the _FOLDER_ path, ‼️ NOT FILE path‼️, where you want `survey_long` to be stored.** ⚠️
 
 # multiple_answers
 
@@ -38,4 +42,4 @@ This takes all of the questions in the survey that have multiple selection optio
   
 These are used in the Tableau relational database.
 
-⚠️**please edit `file_path` to the file path of Survey_Data on your local machine, as well as `destination_path` to the folder where you want `multiple_response_qs_long.xlsx` and `multiple_response_qs.xlsx` to be stored. Follow the previous instructions to get the correct FILE and FOLDER paths.** ⚠️
+⚠️**please edit `file_path` to the _FILE_ path of Survey_Data on your local machine, as well as `destination_path` to the _FOLDER_ path where you want `multiple_response_qs_long.xlsx` and `multiple_response_qs.xlsx` to be stored. Follow the previous instructions to get the correct FILE and FOLDER paths.** ⚠️
