@@ -46,8 +46,10 @@ Once you've done this, the sheet should be uploaded into the original file!
 
 
 # Company Upload
-This file utilizes the hivebrite API to push changes onto the website. The only thing you need to change is `file_path` and make sure `sheet_name' is correct in this line:
+This file utilizes the hivebrite API to push changes onto the website. The file you should be pulling from is "company_upload." The only thing you need to change is `file_path` and make sure `sheet_name' is correct in this line:
 
 `df = pd.read_excel(file_path, sheet_name="industry_only")`
 
 In this example, we're pulling CVC industry and the sheet on the excel file is called "industry_only." Then, just click run.
+
+
