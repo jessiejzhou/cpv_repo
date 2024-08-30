@@ -35,6 +35,7 @@ This is the file to pivot the original "Master Data" into long format. Run it to
 This takes all of the questions in the survey that have multiple selection options, and breaks each selection down into a row by CVC. Primary outputs are: 
 - multiple_response_qs_long.xlsx
 - multiple_response_qs.xlsx
+  
 These are used in the Tableau relational database.
 
-⚠️**please edit `file_path` to the file path of Survey_Data on your local machine, as well as `destination_path` to the folder where you want `survey_long` to be stored. Follow the previous instructions to get the correct FILE and FOLDER paths.** ⚠️
+⚠️**please edit `file_path` to the file path of Survey_Data on your local machine, as well as `destination_path` to the folder where you want `multiple_response_qs_long.xlsx` and `multiple_response_qs.xlsx` to be stored. Follow the previous instructions to get the correct FILE and FOLDER paths.** ⚠️
