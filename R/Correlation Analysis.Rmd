@@ -16,7 +16,7 @@ df <- read_excel("/Users/counterpartventures/Desktop/Data/Survey_Data_V5.xlsx",
 ```
 
 ## Four Years Data
-```{r, fig.height=10}
+```{r, fig.height=9}
 numeric_cols_24 <- df %>%
   select(where(is.numeric)) %>%
   select(matches("_from_24"))
@@ -65,9 +65,9 @@ numeric_cols_21 <- numeric_cols_21 %>%
          active_companies_portfolio) %>%
   na.omit()
 
-corrplot(cor(numeric_cols_24))
-corrplot(cor(numeric_cols_23))
-corrplot(cor(numeric_cols_22))
-corrplot(cor(numeric_cols_21))
+corrplot(cor(numeric_cols_24), type = "lower", main = "2024")
+corrplot(cor(numeric_cols_23), type = "lower", main = "2023")
+corrplot(cor(numeric_cols_22), type = "lower", main = "2022")
+corrplot(cor(numeric_cols_21), type = "lower", main = "2021")
 ```
 
