@@ -19,18 +19,14 @@ Click "Run All" or Option + Command + R to run the script.
 
 This is the most important file. If there are any changes to the yearly survey data, then run this script and you will get updates in "Master Data."
 
-⚠️**please edit `file_path` to the file path of Survey_Data on your local machine.**⚠️
+⚠️ **Please edit `file_path` to the file path of Survey_Data on your local machine.** ⚠️
 
 
 # pivot_df
 
 This is the file to pivot the original "Master Data" into long format. Run it to get a long version of your data. 
 
-⚠️**please edit `file_path` to the file path of Survey_Data on your local machine, as well as `destination_path` to the **folder, NOT FILE, path** where you want `survey_long` to be stored. for example, file_path would be something like: 
-
-"/Users/counterpartventures/Desktop/Data/Survey_Data_V5.xlsx"
-
-whereas folder path is: "/Users/counterpartventures/Desktop/Data/"**⚠️
+⚠️ **please edit `file_path` to the file path of Survey_Data on your local machine, as well as `destination_path` to the **folder, NOT FILE, path** where you want `survey_long` to be stored. for example, file_path would be something like: \\ "/Users/counterpartventures/Desktop/Data/Survey_Data_V5.xlsx" \\ whereas folder path is: \\ "/Users/counterpartventures/Desktop/Data/"** ⚠️
 
 # multiple_answers
 
@@ -39,4 +35,4 @@ This takes all of the questions in the survey that have multiple selection optio
 - multiple_response_qs.xlsx
 These are used in the Tableau relational database.
 
-⚠️**please edit `file_path` to the file path of Survey_Data on your local machine, as well as `destination_path` to the folder where you want `survey_long` to be stored. Follow the previous instructions to get the correct FILE and FOLDER paths.**⚠️
+⚠️**please edit `file_path` to the file path of Survey_Data on your local machine, as well as `destination_path` to the folder where you want `survey_long` to be stored. Follow the previous instructions to get the correct FILE and FOLDER paths.** ⚠️
