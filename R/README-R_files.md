@@ -10,7 +10,7 @@ There are three main files you will need: master.Rmd, pivot_df.Rmd, and multiple
 
 You will need to update file_path to where the data is stored on your local machine, as well as update the destination path to where you want the output to be stored. 
 
-**There is a difference between FILE path and FOLDER path, for example, file_path would be something like:<br><br>_"/Users/counterpartventures/Desktop/Data/Survey_Data_V5.xlsx"_ <br><br>whereas folder path is:<br><br>_"/Users/counterpartventures/Desktop/Data"_**
+**‼️There is a difference between FILE path and FOLDER path,‼️ for example, file_path would be something like:<br><br>_"/Users/counterpartventures/Desktop/Data/Survey_Data_V5.xlsx"_ <br><br>whereas folder path is:<br><br>_"/Users/counterpartventures/Desktop/Data"_**
 
 You will have to choose which path to use according to my instructions below.
 
