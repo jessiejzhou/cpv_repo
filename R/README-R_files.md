@@ -26,7 +26,9 @@ This is the most important file. If there are any changes to the yearly survey d
 
 This is the file to pivot the original "Master Data" into long format. Run it to get a long version of your data. 
 
-⚠️ **please edit `file_path` to the file path of Survey_Data on your local machine. Also edit `destination_path` to the folder path, ‼️ NOT FILE path‼️, where you want `survey_long` to be stored. For example, file_path would be something like:<br><br>_"/Users/counterpartventures/Desktop/Data/Survey_Data_V5.xlsx"_ <br><br>whereas folder path is:<br><br>_"/Users/counterpartventures/Desktop/Data"_** ⚠️
+⚠️ **please edit `file_path` to the file path of Survey_Data on your local machine.**
+
+**Also edit `destination_path` to the folder path, ‼️ NOT FILE path‼️, where you want `survey_long` to be stored. For example, file_path would be something like:<br><br>_"/Users/counterpartventures/Desktop/Data/Survey_Data_V5.xlsx"_ <br><br>whereas folder path is:<br><br>_"/Users/counterpartventures/Desktop/Data"_** ⚠️
 
 # multiple_answers
 
